@@ -1,0 +1,73 @@
+/* style.css - usando Tailwind solo por CDN */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.btn-primario {
+  background-color: #16a34a; /* verde tailwind 600 */
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+}
+
+.btn-primario:hover {
+  background-color: #15803d; /* verde tailwind 700 */
+}
+
+/* Estilos para mensajes de formulario */
+.text-red-600 { color: #dc2626; }
+.text-green-600 { color: #16a34a; }
+
+/* Centrar formularios en pantallas pequeñas */
+@media (max-width: 640px) {
+  .max-w-md { width: 92%; }
+}
+
+/* Toggle oscuro (pequeño) */
+#darkToggle { cursor: pointer; }
+#darkKnob { left: 0.125rem; top: 0.125rem; }
+
+/* En modo dark, algunos elementos pueden necesitar contraste */
+.dark .btn-primario { background-color: #10b981; }
+.dark input, .dark textarea { background-color: #1f2937; color: #e5e7eb; border-color: #374151; }
+.dark .bg-white { background-color: #111827; }
+
+/* Contraste mejorado en modo oscuro */
+.dark .bg-white {
+  background-color: #0b1220; /* fondo de tarjetas más oscuro pero distinguible */
+  border: 1px solid rgba(255,255,255,0.04);
+  box-shadow: 0 6px 18px rgba(2,6,23,0.6);
+}
+
+.dark .shadow { box-shadow: 0 6px 18px rgba(2,6,23,0.6); }
+.dark .border { border-color: rgba(255,255,255,0.06); }
+
+/* Ajustes de tipografía para evitar mezclarse con el fondo */
+.dark .text-gray-700 { color: #e6eef8 !important; }
+.dark .text-gray-600 { color: #cbd5e1 !important; }
+.dark .text-gray-500 { color: #9ca3af !important; }
+
+/* Inputs, selects y textareas con borde más visible en dark */
+.dark input, .dark select, .dark textarea {
+  border: 1px solid rgba(255,255,255,0.04);
+  background-color: #0f1724;
+  color: #e6eef8;
+}
+
+/* Asegurar contraste del placeholder */
+.dark ::-webkit-input-placeholder { color: rgba(230,238,248,0.45); }
+.dark ::-moz-placeholder { color: rgba(230,238,248,0.45); }
+.dark :-ms-input-placeholder { color: rgba(230,238,248,0.45); }
+
+/* Mejor contraste para títulos y botones dentro de cajas */
+.dark h1, .dark h2, .dark h3, .dark h4 { color: #f8fafc; }
+.dark .btn-primario { background-color: #06b6d4; color: #042027; }
+
+/* Botón estilizado para seleccionar avatar */
+#avatarButton { background: linear-gradient(180deg, #ffffff, #f8fafc); }
+#avatarButton:hover { background: linear-gradient(180deg, #f1f5f9, #eef2ff); }
+#avatarFileName { display: inline-block; max-width: 40%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
+
+.dark #avatarButton { background: linear-gradient(180deg, #111827, #0f172a); color: #e5e7eb; border-color: #374151; }
+.dark #avatarButton:hover { background: linear-gradient(180deg, #111827, #0b1220); }
+.dark #avatarFileName { color: #cbd5e1; }

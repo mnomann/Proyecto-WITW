@@ -186,14 +186,15 @@
       </aside>
 
       <!-- Mapa -->
-      <section class="lg:col-span-2 relative bg-gray-200 rounded shadow flex items-center justify-center">
-        <div class="absolute inset-0 flex items-center justify-center text-gray-500">
-          MAPA / API de geolocalización
-        </div>
+      <section class="lg:col-span-2 relative bg-gray-200 rounded shadow flex items-center justify-center overflow-hidden">
+      <iframe 
+      width="100%" 
+      height="100%" 
+      src="https://www.openstreetmap.org/export/embed.html?bbox=-76.0%2C-56.0%2C-66.0%2C-17.0&layer=mapnik" 
+      style="border: 0;">
+      </iframe>
 
-        <!-- Ejemplo de pines -->
-        <button class="absolute bg-red-500 rounded-full w-4 h-4" style="top:40%; left:30%;" title="Feria de Diseño"></button>
-        <button class="absolute bg-blue-500 rounded-full w-4 h-4" style="top:55%; left:60%;" title="Concierto Indie"></button>
+      
       </section>
     </div>
   </section>

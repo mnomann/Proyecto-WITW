@@ -1,10 +1,10 @@
-package com.WITW.demo;
+package WITW.demo;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class WitwApplicationTests {
+class DemoApplicationTests {
 
 	@Test
 	void contextLoads() {

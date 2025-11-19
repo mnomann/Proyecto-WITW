@@ -95,4 +95,38 @@ class AuthServiceTest {
         field.set(mock, value);
     }
 
+@Test
+void register_ShouldCreateUserAndReturnToken() {
+    // Arrange
+    RegisterRequest request = new RegisterRequest();
+    request.setUsername("testuser");
+    request.setPassword("password123");
+    request.setFirstname("John");
+    request.setLastname("Doe");
+    request.setCountry("Chile");
+
+    User user = User.builder()
+        .username("testuser")
+        .password("encodedPassword")
+        .firstname("John")
+        .lastname("Doe")
+        .country("Chile")
+        .role(Role.USER)
+        .build();
+
+    when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
+    when(userRepository.save(any(User.class))).thenReturn(user);
+    when(jwtService.getToken(any(User.class))).thenReturn("fake-jwt-token");
+
+    // Act
+    AuthResponse response = authService.register(request);
+
+    // Assert
+    assertNotNull(response);
+    assertEquals("fake-jwt-token", response.getToken());
+    verify(passwordEncoder).encode("password123");
+    verify(userRepository).save(any(User.class));
+    verify(jwtService).getToken(any(User.class));
+}
+
 }

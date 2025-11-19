@@ -1,3 +1,5 @@
+package WITW.demo.Jwt;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import org.junit.jupiter.api.AfterEach;
@@ -17,7 +19,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-package WITW.demo.Jwt;
+
 
 
 
@@ -138,4 +140,5 @@ class JwtAuthenticationFilterTest {
         when(request.getServletPath()).thenReturn("/api/resource");
         assertFalse(filter.shouldNotFilter(request));
     }
+
 }

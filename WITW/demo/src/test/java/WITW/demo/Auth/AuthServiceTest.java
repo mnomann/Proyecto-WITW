@@ -19,10 +19,6 @@ import WITW.demo.User.UserRepository;
 
 package WITW.demo.Auth;
 
-
-
-
-
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
 
@@ -43,53 +39,67 @@ class AuthServiceTest {
 
     @Test
     void register_savesUserWithEncodedPassword_and_returnsToken() throws Exception {
-        // Arrange
-        RegisterRequest request = Mockito.mock(RegisterRequest.class);
-        when(request.getUsername()).thenReturn("alice");
-        when(request.getPassword()).thenReturn("plainPass");
-        when(request.getFirstname()).thenReturn("Alice");
-        when(request.getCountry()).thenReturn("Wonderland");
-        // the implementation reads request.lastname (field access), set it via reflection on the mock
-        setFieldOnMock(request, "lastname", "Liddell");
+        // Preparar (Arrange)
+        RegisterRequest solicitudRegistro = Mockito.mock(RegisterRequest.class);
+        when(solicitudRegistro.getUsername()).thenReturn("alice");
+        when(solicitudRegistro.getPassword()).thenReturn("plainPass");
+        when(solicitudRegistro.getFirstname()).thenReturn("Alice");
+        when(solicitudRegistro.getCountry()).thenReturn("Wonderland");
+        
+        // La implementación lee request.lastname (acceso a campo), se establece mediante reflexión en el mock
+        setFieldOnMock(solicitudRegistro, "lastname", "Liddell");
 
+        // Simular el codificador de contraseñas
         when(passwordEncoder.encode("plainPass")).thenReturn("encodedPass");
+        
+        // Simular el servicio JWT para devolver un token
         when(jwtService.getToken(any(User.class))).thenReturn("jwt-token-123");
 
-        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-        when(userRepository.save(userCaptor.capture())).thenAnswer(invocation -> invocation.getArgument(0));
+        // Capturar el objeto User que se guarda
+        ArgumentCaptor<User> captorUsuario = ArgumentCaptor.forClass(User.class);
+        when(userRepository.save(captorUsuario.capture())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // Act
-        AuthResponse response = authService.register(request);
+        // Actuar (Act)
+        AuthResponse respuesta = authService.register(solicitudRegistro);
 
-        // Assert
-        assertEquals("jwt-token-123", response.getToken());
-        User saved = userCaptor.getValue();
-        assertEquals("alice", saved.getUsername());
-        assertEquals("encodedPass", saved.getPassword());
-        assertEquals("Alice", saved.getFirstname());
-        assertEquals("Liddell", saved.getLastname());
-        assertEquals("Wonderland", saved.getCountry());
-        assertEquals(Role.USER, saved.getRole());
+        // Afirmar (Assert)
+        assertEquals("jwt-token-123", respuesta.getToken());
+        
+        // Verificar los detalles del User capturado
+        User usuarioGuardado = captorUsuario.getValue();
+        assertEquals("alice", usuarioGuardado.getUsername());
+        assertEquals("encodedPass", usuarioGuardado.getPassword());
+        assertEquals("Alice", usuarioGuardado.getFirstname());
+        assertEquals("Liddell", usuarioGuardado.getLastname());
+        assertEquals("Wonderland", usuarioGuardado.getCountry());
+        assertEquals(Role.USER, usuarioGuardado.getRole());
 
+        // Verificar que el método save fue llamado
         verify(userRepository).save(any(User.class));
-        verify(jwtService).getToken(saved);
+        // Verificar que se solicitó un token para el usuario guardado
+        verify(jwtService).getToken(usuarioGuardado);
     }
 
-    private static void setFieldOnMock(Object mock, String fieldName, Object value) throws Exception {
+    /**
+     * Establece un valor en un campo específico de un objeto mock,
+     * útil cuando la clase bajo prueba accede directamente a un campo
+     * en lugar de usar un getter.
+     */
+    private static void setFieldOnMock(Object mock, String nombreCampo, Object valor) throws Exception {
         Class<?> clazz = mock.getClass();
-        Field field = null;
+        Field campo = null;
         while (clazz != null && clazz != Object.class) {
             try {
-                field = clazz.getDeclaredField(fieldName);
+                campo = clazz.getDeclaredField(nombreCampo);
                 break;
             } catch (NoSuchFieldException e) {
                 clazz = clazz.getSuperclass();
             }
         }
-        if (field == null) {
-            throw new NoSuchFieldException("Field '" + fieldName + "' not found on mock");
+        if (campo == null) {
+            throw new NoSuchFieldException("Campo '" + nombreCampo + "' no encontrado en el mock");
         }
-        field.setAccessible(true);
-        field.set(mock, value);
+        campo.setAccessible(true);
+        campo.set(mock, valor);
     }
 }

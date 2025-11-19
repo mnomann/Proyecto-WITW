@@ -19,13 +19,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 package WITW.demo.Jwt;
 
-
-
-
-
-
-
-
 class JwtAuthenticationFilterTest {
 
     @Mock
@@ -35,107 +28,137 @@ class JwtAuthenticationFilterTest {
     private UserDetailsService userDetailsService;
 
     @Mock
-    private HttpServletRequest request;
+    private HttpServletRequest solicitud; // solicitud HTTP
 
     @Mock
-    private HttpServletResponse response;
+    private HttpServletResponse respuesta; // respuesta HTTP
 
     @Mock
-    private FilterChain filterChain;
+    private FilterChain cadenaFiltros; // filterChain
 
     @Mock
-    private UserDetails userDetails;
+    private UserDetails detallesUsuario; // userDetails
 
     private AutoCloseable mocks;
-    private JwtAuthenticationFilter filter;
+    private JwtAuthenticationFilter filtro; // filter
 
     @BeforeEach
     void setUp() {
         mocks = MockitoAnnotations.openMocks(this);
-        SecurityContextHolder.clearContext();
-        filter = new JwtAuthenticationFilter(jwtService, userDetailsService);
+        SecurityContextHolder.clearContext(); // Limpiar el contexto antes de cada prueba
+        filtro = new JwtAuthenticationFilter(jwtService, userDetailsService);
     }
 
     @AfterEach
     void tearDown() throws Exception {
-        SecurityContextHolder.clearContext();
+        SecurityContextHolder.clearContext(); // Limpiar el contexto después de cada prueba
         mocks.close();
     }
 
     @Test
-    void doFilterInternal_noAuthorizationHeader_callsChainAndDoesNotAuthenticate() throws ServletException, IOException {
-        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn(null);
+    void doFilterInternal_sinCabeceraAuthorization_llamaCadenaYNoAutentica() throws ServletException, IOException {
+        // Arrange
+        when(solicitud.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn(null);
 
-        filter.doFilterInternal(request, response, filterChain);
+        // Act
+        filtro.doFilterInternal(solicitud, respuesta, cadenaFiltros);
 
-        verify(filterChain, times(1)).doFilter(request, response);
+        // Assert
+        // Verificar que la cadena de filtros fue llamada
+        verify(cadenaFiltros, times(1)).doFilter(solicitud, respuesta);
+        // Verificar que no hay autenticación
         assertNull(SecurityContextHolder.getContext().getAuthentication());
+        // Verificar que los servicios clave no fueron interactuados
         verifyNoInteractions(jwtService, userDetailsService);
     }
 
     @Test
-    void doFilterInternal_tokenPresent_butUsernameIsNull_callsChainAndDoesNotAuthenticate() throws ServletException, IOException {
-        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Bearer sometoken");
-        when(jwtService.getUsernameFromToken("sometoken")).thenReturn(null);
+    void doFilterInternal_tokenPresente_peroUsernameEsNulo_llamaCadenaYNoAutentica() throws ServletException, IOException {
+        // Arrange
+        final String token = "sometoken";
+        when(solicitud.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Bearer " + token);
+        // Simular que el token no contiene un nombre de usuario válido
+        when(jwtService.getUsernameFromToken(token)).thenReturn(null);
 
-        filter.doFilterInternal(request, response, filterChain);
+        // Act
+        filtro.doFilterInternal(solicitud, respuesta, cadenaFiltros);
 
-        verify(jwtService, times(1)).getUsernameFromToken("sometoken");
-        verify(filterChain, times(1)).doFilter(request, response);
+        // Assert
+        verify(jwtService, times(1)).getUsernameFromToken(token);
+        verify(cadenaFiltros, times(1)).doFilter(solicitud, respuesta);
         assertNull(SecurityContextHolder.getContext().getAuthentication());
-        verifyNoMoreInteractions(userDetailsService);
+        // Verificar que el UserDetailsService no fue llamado
+        verifyNoMoreInteractions(userDetailsService); 
     }
 
     @Test
-    void doFilterInternal_tokenPresent_usernamePresent_butAlreadyAuthenticated_skipsAuthentication() throws ServletException, IOException {
-        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Bearer token123");
+    void doFilterInternal_tokenPresente_usernamePresente_peroYaAutenticado_saltaAutenticacion() throws ServletException, IOException {
+        // Arrange
+        when(solicitud.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Bearer token123");
         when(jwtService.getUsernameFromToken("token123")).thenReturn("user");
-        // Put an existing authentication in the context
+        
+        // Poner una autenticación existente en el contexto
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken("existing", null, null));
 
-        filter.doFilterInternal(request, response, filterChain);
+        // Act
+        filtro.doFilterInternal(solicitud, respuesta, cadenaFiltros);
 
-        // Should not attempt to load UserDetails or validate token because authentication is non-null
-        verifyNoInteractions(userDetailsService, jwtService); // getUsernameFromToken already stubbed but will not be called due to early check
-        verify(filterChain, times(1)).doFilter(request, response);
+        // Assert
+        // No debería intentar cargar UserDetails ni validar el token porque ya hay autenticación
+        verify(jwtService, never()).isTokenValid(any(), any());
+        verify(userDetailsService, never()).loadUserByUsername(any());
+        verify(cadenaFiltros, times(1)).doFilter(solicitud, respuesta);
+        
+        // Verificar que la autenticación existente no fue sobrescrita (aunque el assert en este caso es implícito)
+        Authentication authActual = SecurityContextHolder.getContext().getAuthentication();
+        assertEquals("existing", authActual.getPrincipal());
     }
 
     @Test
-    void doFilterInternal_tokenValid_setsAuthenticationAndCallsChain() throws ServletException, IOException {
-        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Bearer validtoken");
-        when(jwtService.getUsernameFromToken("validtoken")).thenReturn("alice");
-        when(userDetailsService.loadUserByUsername("alice")).thenReturn(userDetails);
-        when(jwtService.isTokenValid("validtoken", userDetails)).thenReturn(true);
+    void doFilterInternal_tokenValido_estableceAutenticacionYLlamaCadena() throws ServletException, IOException {
+        // Arrange
+        final String tokenValido = "validtoken";
+        final String nombreUsuario = "alice";
+        when(solicitud.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Bearer " + tokenValido);
+        when(jwtService.getUsernameFromToken(tokenValido)).thenReturn(nombreUsuario);
+        when(userDetailsService.loadUserByUsername(nombreUsuario)).thenReturn(detallesUsuario);
+        when(jwtService.isTokenValid(tokenValido, detallesUsuario)).thenReturn(true);
 
-        // Provide some values used by WebAuthenticationDetailsSource (optional)
-        when(request.getRemoteAddr()).thenReturn("127.0.0.1");
-        when(request.getHeader("User-Agent")).thenReturn("JUnit");
+        // Proporcionar algunos valores usados por WebAuthenticationDetailsSource (opcional)
+        when(solicitud.getRemoteAddr()).thenReturn("127.0.0.1");
+        when(solicitud.getHeader("User-Agent")).thenReturn("JUnit");
 
-        filter.doFilterInternal(request, response, filterChain);
+        // Act
+        filtro.doFilterInternal(solicitud, respuesta, cadenaFiltros);
 
-        verify(jwtService, times(1)).getUsernameFromToken("validtoken");
-        verify(userDetailsService, times(1)).loadUserByUsername("alice");
-        verify(jwtService, times(1)).isTokenValid("validtoken", userDetails);
-        verify(filterChain, times(1)).doFilter(request, response);
+        // Assert
+        verify(jwtService, times(1)).getUsernameFromToken(tokenValido);
+        verify(userDetailsService, times(1)).loadUserByUsername(nombreUsuario);
+        verify(jwtService, times(1)).isTokenValid(tokenValido, detallesUsuario);
+        verify(cadenaFiltros, times(1)).doFilter(solicitud, respuesta);
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        assertNotNull(auth, "Authentication should be set in SecurityContext");
-        assertTrue(auth instanceof UsernamePasswordAuthenticationToken);
-        assertEquals(userDetails, auth.getPrincipal());
-        assertNull(auth.getCredentials());
-        // authorities equality is handled by UserDetails mock if needed; at least ensure it's present (not null)
-        assertNotNull(auth.getAuthorities());
+        // Verificar el contexto de seguridad
+        Authentication autenticacion = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(autenticacion, "La autenticación debe establecerse en SecurityContext");
+        assertTrue(autenticacion instanceof UsernamePasswordAuthenticationToken);
+        assertEquals(detallesUsuario, autenticacion.getPrincipal());
+        assertNull(autenticacion.getCredentials());
+        assertNotNull(autenticacion.getAuthorities());
+    }
+    
+    // --- Pruebas para shouldNotFilter ---
+
+    @Test
+    void shouldNotFilter_rutaComienzaConAuth_retornaTrue() throws ServletException {
+        when(solicitud.getServletPath()).thenReturn("/auth/login");
+        // Los filtros de autenticación generalmente se saltan para rutas de inicio de sesión/registro
+        assertTrue(filtro.shouldNotFilter(solicitud));
     }
 
     @Test
-    void shouldNotFilter_pathStartsWithAuth_returnsTrue() throws ServletException {
-        when(request.getServletPath()).thenReturn("/auth/login");
-        assertTrue(filter.shouldNotFilter(request));
-    }
-
-    @Test
-    void shouldNotFilter_pathDoesNotStartWithAuth_returnsFalse() throws ServletException {
-        when(request.getServletPath()).thenReturn("/api/resource");
-        assertFalse(filter.shouldNotFilter(request));
+    void shouldNotFilter_rutaNoComienzaConAuth_retornaFalse() throws ServletException {
+        when(solicitud.getServletPath()).thenReturn("/api/resource");
+        // Para rutas de API protegidas, el filtro debe ejecutarse
+        assertFalse(filtro.shouldNotFilter(solicitud));
     }
 }

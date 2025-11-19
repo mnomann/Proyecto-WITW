@@ -7,62 +7,72 @@ import org.mockito.Mockito;
 
 package WITW.demo.Jwt;
 
-
-
-
 public class JwtServiceTest {
 
-    private JwtService jwtService;
+    private JwtService servicioJwt; // jwtService
 
     @BeforeEach
     void setUp() {
-        jwtService = new JwtService();
+        // Inicializa la instancia del servicio JWT antes de cada prueba
+        servicioJwt = new JwtService();
     }
 
     @Test
-    void generateToken_and_extractUsername() {
-        UserDetails user = Mockito.mock(UserDetails.class);
-        Mockito.when(user.getUsername()).thenReturn("alice");
+    void generateToken_y_extractUsername() {
+        // Arrange
+        UserDetails usuario = Mockito.mock(UserDetails.class);
+        Mockito.when(usuario.getUsername()).thenReturn("alice");
 
-        String token = jwtService.getToken(user);
-        String username = jwtService.getUsernameFromToken(token);
+        // Act
+        String token = servicioJwt.getToken(usuario);
+        String nombreUsuario = servicioJwt.getUsernameFromToken(token);
 
-        assertEquals("alice", username);
+        // Assert
+        // El nombre de usuario extraído debe coincidir con el original
+        assertEquals("alice", nombreUsuario);
     }
 
     @Test
-    void isTokenValid_returnsTrue_forMatchingUser() {
-        UserDetails user = Mockito.mock(UserDetails.class);
-        Mockito.when(user.getUsername()).thenReturn("bob");
+    void isTokenValid_retornaTrue_paraUsuarioCoincidente() {
+        // Arrange
+        UserDetails usuario = Mockito.mock(UserDetails.class);
+        Mockito.when(usuario.getUsername()).thenReturn("bob");
 
-        String token = jwtService.getToken(user);
+        String token = servicioJwt.getToken(usuario);
 
-        // same userDetails instance (matching username) should validate
-        assertTrue(jwtService.isTokenValid(token, user));
+        // Act & Assert
+        // La misma instancia de UserDetails (nombre de usuario coincidente) debe validar
+        assertTrue(servicioJwt.isTokenValid(token, usuario));
     }
 
     @Test
-    void isTokenValid_returnsFalse_forDifferentUser() {
-        UserDetails tokenOwner = Mockito.mock(UserDetails.class);
-        Mockito.when(tokenOwner.getUsername()).thenReturn("carol");
+    void isTokenValid_retornaFalse_paraUsuarioDiferente() {
+        // Arrange
+        UserDetails propietarioToken = Mockito.mock(UserDetails.class);
+        Mockito.when(propietarioToken.getUsername()).thenReturn("carol");
 
-        UserDetails otherUser = Mockito.mock(UserDetails.class);
-        Mockito.when(otherUser.getUsername()).thenReturn("dave");
+        UserDetails otroUsuario = Mockito.mock(UserDetails.class);
+        Mockito.when(otroUsuario.getUsername()).thenReturn("dave");
 
-        String token = jwtService.getToken(tokenOwner);
+        String token = servicioJwt.getToken(propietarioToken);
 
-        assertFalse(jwtService.isTokenValid(token, otherUser));
+        // Act & Assert
+        // El token generado para 'carol' no debe ser válido para 'dave'
+        assertFalse(servicioJwt.isTokenValid(token, otroUsuario));
     }
 
     @Test
-    void tamperedToken_throwsJwtException_onParsing() {
-        UserDetails user = Mockito.mock(UserDetails.class);
-        Mockito.when(user.getUsername()).thenReturn("eve");
+    void tamperedToken_lanzaJwtException_alParsear() {
+        // Arrange
+        UserDetails usuario = Mockito.mock(UserDetails.class);
+        Mockito.when(usuario.getUsername()).thenReturn("eve");
 
-        String token = jwtService.getToken(user);
-        // tamper with the token (break the signature)
-        String tampered = token + "x";
+        String token = servicioJwt.getToken(usuario);
+        // Alterar el token (romper la firma) añadiendo un carácter extra
+        String tokenAlterado = token + "x";
 
-        assertThrows(JwtException.class, () -> jwtService.getUsernameFromToken(tampered));
+        // Act & Assert
+        // Intentar obtener el nombre de usuario de un token alterado debe lanzar una excepción de seguridad
+        assertThrows(JwtException.class, () -> servicioJwt.getUsernameFromToken(tokenAlterado));
     }
 }

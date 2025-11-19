@@ -44,7 +44,7 @@ class AuthServiceTest {
     private AuthService authService;
 
     @Test
-    void register_savesUserWithEncodedPassword_and_returnsToken() throws Exception {
+    void register-savesUserWithEncodedPassword_and_returnsToken() throws Exception {
         // Arrange
         RegisterRequest request = Mockito.mock(RegisterRequest.class);
         when(request.getUsername()).thenReturn("alice");

@@ -1,3 +1,5 @@
+package WITW.demo.Jwt;
+
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -5,7 +7,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import io.jsonwebtoken.JwtException;
 import org.mockito.Mockito;
 
-package WITW.demo.Jwt;
 
 
 
@@ -65,4 +66,5 @@ public class JwtServiceTest {
 
         assertThrows(JwtException.class, () -> jwtService.getUsernameFromToken(tampered));
     }
+
 }

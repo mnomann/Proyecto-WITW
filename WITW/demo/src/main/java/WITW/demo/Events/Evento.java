@@ -38,4 +38,7 @@ public class Evento {
     @NotNull(message = "La longitud es obligatoria")
     @Column(nullable = false)
     private Double longitud;
+
+    // Dirección del evento API
+    private String direccion;
 }

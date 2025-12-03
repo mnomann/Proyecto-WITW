@@ -23,9 +23,13 @@ public class EventoController {
         
         if (result.hasErrors()) {
             return ResponseEntity
-                    .badRequest() // Esto devuelve el código 400 que espera el test
+                    .badRequest()
                     .body("Error de validación: " + result.getFieldError().getDefaultMessage());
         }
+        
+        //nuevo: Llamada a la API para obtener la dirección basada en las coordenadas
+        String direccion = openStreetMapService.obtenerDireccion(evento.getLatitud(), evento.getLongitud());
+        evento.setDireccion(direccion);
 
         Evento nuevoEvento = eventoRepository.save(evento);
         return ResponseEntity.ok(nuevoEvento);

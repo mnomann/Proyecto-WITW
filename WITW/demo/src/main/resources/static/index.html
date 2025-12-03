@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WITW - Where Is The W??</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-100 font-sans text-gray-800">
+
+  <nav class="bg-white shadow fixed w-full top-0 left-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 flex justify-between items-center h-16">
+      <div class="text-2xl font-extrabold text-blue-600 tracking-tight cursor-pointer nav-btn" data-section="inicio">
+        WITW
+      </div>
+
+      <div class="hidden md:flex space-x-8">
+        <button class="nav-btn text-gray-600 hover:text-blue-600 font-medium transition" data-section="inicio">Inicio</button>
+        <button class="nav-btn text-gray-600 hover:text-blue-600 font-medium transition" data-section="add">Crear Evento</button>
+        <button class="nav-btn text-gray-600 hover:text-blue-600 font-medium transition" data-section="mapa">Mapa</button>
+      </div>
+
+      <div class="flex items-center space-x-4">
+        <a href="login.html" class="text-sm text-gray-500 hover:text-gray-900 hidden lg:block">Ingresar</a>
+        
+        <div class="relative">
+          <button id="profileBtn" class="w-10 h-10 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center transition focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <i class="bi bi-person-fill text-xl text-gray-600"></i>
+          </button>
+          <div id="profileMenu" class="hidden absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-lg shadow-xl py-1 transform origin-top-right transition-all">
+            <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 nav-btn flex items-center gap-2" data-section="perfil">
+              <i class="bi bi-person-gear"></i> Mi Perfil
+            </button>
+            <div class="border-t border-gray-100 my-1"></div>
+            <a href="login.html" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
+              <i class="bi bi-box-arrow-right"></i> Salir
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main id="inicio" class="section pt-24 pb-12 max-w-7xl mx-auto px-4">
+    <div class="flex justify-between items-end mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Descubre Eventos</h1>
+        <p class="text-gray-500 mt-1">Las mejores actividades cerca de ti</p>
+      </div>
+      <button class="nav-btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow transition flex items-center gap-2" data-section="add">
+        <i class="bi bi-plus-lg"></i> Nuevo Evento
+      </button>
+    </div>
+
+    <div id="contenedor-actividades" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div class="col-span-full text-center py-20 text-gray-400">
+        <i class="bi bi-arrow-clockwise text-4xl animate-spin block mb-2"></i>
+        Cargando actividades...
+      </div>
+    </div>
+  </main>
+
+  <section id="perfil" class="section hidden pt-24 max-w-4xl mx-auto px-4 mb-20">
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+      
+      <div class="h-40 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 relative">
+        <button class="absolute top-4 right-4 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full backdrop-blur-sm transition">
+          <i class="bi bi-pencil-fill"></i>
+        </button>
+      </div>
+      
+      <div class="px-8 pb-8 relative">
+        <div class="flex justify-between items-end -mt-16 mb-6">
+          <div class="relative group">
+            <div class="w-32 h-32 rounded-full border-4 border-white shadow-md overflow-hidden bg-gray-100 relative z-10">
+              <img id="profile-avatar-img" src="https://placehold.co/200x200?text=User" alt="Avatar" class="w-full h-full object-cover">
+            </div>
+            <label for="avatar-upload" class="absolute inset-0 z-20 rounded-full bg-black/50 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 cursor-pointer transition-all duration-300 backdrop-blur-sm">
+              <i class="bi bi-camera-fill text-2xl"></i>
+            </label>
+            <input type="file" id="avatar-upload" class="hidden" accept="image/*">
+          </div>
+
+          <button id="btn-logout" class="bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition font-medium text-sm shadow-sm flex items-center gap-2">
+            <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+          </button>
+        </div>
+
+        <div class="mb-8">
+          <h1 class="text-3xl font-bold text-gray-900" id="profile-display-name">Usuario</h1>
+          <p class="text-blue-600 font-medium flex items-center gap-1">
+            <i class="bi bi-patch-check-fill"></i> Miembro verificado
+          </p>
+        </div>
+
+        <form id="form-profile" class="space-y-8">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            <div class="space-y-5">
+              <h3 class="text-lg font-bold text-gray-800 border-b pb-2 flex items-center gap-2">
+                <i class="bi bi-person-vcard text-blue-600"></i> Información Personal
+              </h3>
+              
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Nombre Completo</label>
+                <input type="text" name="nombre" id="input-nombre" class="w-full border-gray-300 border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-gray-50 focus:bg-white" placeholder="Ej: Juan Pérez">
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Correo Electrónico</label>
+                <input type="email" name="email" id="input-email" class="w-full border-gray-300 border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-gray-50 focus:bg-white" placeholder="juan@ejemplo.com">
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Sobre mí</label>
+                <textarea name="bio" id="input-bio" rows="4" class="w-full border-gray-300 border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-gray-50 focus:bg-white resize-none" placeholder="¿Qué te gusta hacer?"></textarea>
+              </div>
+            </div>
+
+            <div class="space-y-5">
+              <h3 class="text-lg font-bold text-gray-800 border-b pb-2 flex items-center gap-2">
+                <i class="bi bi-shield-lock text-blue-600"></i> Seguridad
+              </h3>
+              
+              <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                <p class="text-sm text-blue-800 mb-4 flex items-start gap-2">
+                  <i class="bi bi-info-circle-fill mt-0.5"></i>
+                  Deja estos campos vacíos si no deseas cambiar tu contraseña.
+                </p>
+                
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Nueva Contraseña</label>
+                    <input type="password" name="password" class="w-full border-white border shadow-sm rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="••••••••">
+                  </div>
+
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Confirmar Contraseña</label>
+                    <input type="password" name="confirm_password" class="w-full border-white border shadow-sm rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="••••••••">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-end pt-4 border-t">
+            <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition shadow-lg hover:shadow-blue-500/30 font-semibold flex items-center gap-2 transform active:scale-95 duration-200">
+              <i class="bi bi-check-lg"></i> Guardar Cambios
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <section id="add" class="section hidden pt-24 max-w-2xl mx-auto px-4 mb-20">
+    <div class="bg-white rounded-xl shadow-lg p-8">
+      <h1 class="text-3xl font-bold mb-6 text-gray-800 border-b pb-4">Publicar Nuevo Evento</h1>
+      
+      <form id="form-add" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del Evento</label>
+            <input name="nombre" type="text" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ej: Feria Gastronómica" required>
+          </div>
+
+          <div class="col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Ubicación</label>
+            <div class="relative">
+              <i class="bi bi-geo-alt absolute left-3 top-3 text-gray-400"></i>
+              <input name="lugar" type="text" class="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ej: Parque Central" required>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
+            <input name="fecha" type="date" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none" required>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Hora</label>
+            <input name="hora" type="time" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none" required>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+          <textarea name="descripcion" rows="4" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="Detalles del evento..." required></textarea>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">URL Imagen Portada</label>
+            <input name="imagenUrl" type="url" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="https://..." required>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Capacidad Máxima</label>
+            <input name="capacidadMaxima" type="number" min="1" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ej: 50" required>
+          </div>
+        </div>
+
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow transition transform active:scale-95">
+          Crear Evento
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <section id="mapa" class="section hidden pt-24 px-4 max-w-7xl mx-auto h-screen pb-20">
+    <div class="flex flex-col h-full">
+      <h1 class="text-3xl font-bold mb-6 text-gray-800">Mapa de Eventos</h1>
+      <div class="flex-1 bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 relative">
+        <div id="map-container" class="w-full h-full z-10"></div>
+        <div class="absolute bottom-6 left-6 z-[400] bg-white/90 backdrop-blur px-4 py-3 rounded-lg shadow-lg border border-gray-100 max-w-xs">
+          <p class="text-xs font-bold text-gray-500 uppercase mb-2">Referencia</p>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="w-3 h-3 rounded-full bg-blue-500"></span> <span class="text-sm">Evento Activo</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-red-500"></span> <span class="text-sm">Tu Ubicación</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <script type="module" src="./js/Main.js"></script>
+
+</body>
+</html>

@@ -43,11 +43,9 @@ public class AuthIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        // Opcional: Limpiar base de datos si @Transactional no fuera suficiente
-        // userRepository.deleteAll();
+       
     }
 
-    // --- TEST QUE FALLABA (Assertion Failure) ---
     @Test
     void testLoginUser_Success() throws Exception {
         // 1. PREPARACIÓN (Garantizado): Guardamos el usuario directamente en la BD

@@ -1,8 +1,18 @@
+/**
+ * Clase que gestiona la lógica de las actividades (eventos).
+ * Se encarga del renderizado en el DOM, la persistencia de datos en LocalStorage,
+ * y la gestión de la interacción del usuario (asistencia, comentarios y creación).
+ */
 export class Activities {
+
+    /**
+     * Crea una instancia de la clase Activities.
+     * Inicializa las referencias a los elementos del DOM y define los datos de prueba
+     * que se utilizarán si no existe almacenamiento previo.
+     */
     constructor() {
         this.container = document.getElementById('contenedor-actividades');
         this.formAdd = document.getElementById('form-add');
-        // Datos Dummy iniciales
         this.DUMMY_ACTIVITIES = [
             { id: 1, nombre: 'Senderismo en el Parque Nacional', lugar: 'Parque Nacional La Campana', fecha: '2025-11-15', hora: '09:00', descripcion: 'Excursión al cerro La Campana.', imagenUrl: 'https://images.unsplash.com/photo-1551632811-561732d1e306?q=80&w=2070&auto=format&fit=crop', capacidadMaxima: 20, asistentes: [], comentarios: [] },
             { id: 2, nombre: 'Día de Playa y Surf', lugar: 'Pichilemu', fecha: '2026-01-20', hora: '11:00', descripcion: 'Clases de surf.', imagenUrl: 'https://images.unsplash.com/photo-1502680390469-be75c88b63f8?q=80&w=2070&auto=format&fit=crop', capacidadMaxima: 15, asistentes: [], comentarios: [] }
@@ -10,10 +20,14 @@ export class Activities {
         this.init();
     }
 
+    /**
+     * Inicializa los controladores de eventos (listeners) y renderiza la vista inicial.
+     * Configura la escucha para el envío del formulario de creación y para los clics
+     * delegados en las tarjetas de actividad (asistencia y comentarios).
+     */
     init() {
         this.displayActivities();
-        
-        // Listener para añadir actividad
+
         if (this.formAdd) {
             this.formAdd.addEventListener('submit', (e) => {
                 e.preventDefault();
@@ -21,7 +35,6 @@ export class Activities {
             });
         }
 
-        // Listener global para clics en tarjetas (delegación de eventos)
         this.container.addEventListener('click', (e) => {
             if (e.target.classList.contains('btn-asistencia')) {
                 const id = parseInt(e.target.getAttribute('data-activity-id'));
@@ -36,6 +49,12 @@ export class Activities {
         });
     }
 
+    /**
+     * Recupera la lista de actividades desde el almacenamiento local (LocalStorage).
+     * Si no existen datos almacenados, inicializa y devuelve los datos de prueba.
+     *
+     * @returns {Array<Object>} Un arreglo con los objetos de las actividades.
+     */
     getActivities() {
         let activities = localStorage.getItem('activities');
         if (!activities) {
@@ -45,10 +64,21 @@ export class Activities {
         return JSON.parse(activities);
     }
 
+    /**
+     * Guarda la lista actualizada de actividades en el almacenamiento local.
+     *
+     * @param {Array<Object>} activities - El arreglo de actividades a persistir.
+     */
     saveActivities(activities) {
         localStorage.setItem('activities', JSON.stringify(activities));
     }
 
+    /**
+     * Obtiene el usuario actual de la sesión simulada.
+     * Si no existe un usuario en sesión, crea y guarda un usuario por defecto.
+     *
+     * @returns {Object} El objeto del usuario actual con su ID y nombre.
+     */
     getCurrentUser() {
         let user = localStorage.getItem('currentUser');
         if (!user) {
@@ -58,6 +88,13 @@ export class Activities {
         return JSON.parse(user);
     }
 
+    /**
+     * Alterna el estado de asistencia del usuario actual a una actividad específica.
+     * Si el usuario ya asiste, lo elimina de la lista. Si no, lo agrega, validando
+     * primero que no se haya excedido la capacidad máxima.
+     *
+     * @param {number} activityId - El identificador único de la actividad.
+     */
     toggleAttendance(activityId) {
         const activities = this.getActivities();
         const activity = activities.find(act => act.id === activityId);
@@ -80,6 +117,13 @@ export class Activities {
         this.displayActivities();
     }
 
+    /**
+     * Agrega un nuevo comentario a una actividad específica.
+     * El comentario incluye el autor, el texto y la fecha de creación.
+     *
+     * @param {number} activityId - El identificador único de la actividad.
+     * @param {string} text - El contenido textual del comentario.
+     */
     addComment(activityId, text) {
         if (!text.trim()) return;
         const activities = this.getActivities();
@@ -93,11 +137,17 @@ export class Activities {
             texto: text.trim(),
             fecha: new Date().toISOString()
         });
-        
+
         this.saveActivities(activities);
         this.displayActivities();
     }
 
+    /**
+     * Procesa los datos del formulario para crear y almacenar una nueva actividad.
+     * Genera un nuevo objeto de actividad, lo guarda y redirige la navegación a la vista de inicio.
+     *
+     * @param {FormData} formData - Los datos capturados del formulario HTML.
+     */
     handleAddActivity(formData) {
         const newActivity = {
             id: Date.now(),
@@ -117,10 +167,14 @@ export class Activities {
         alert('Actividad agregada!');
         this.formAdd.reset();
         this.displayActivities();
-        // Disparar evento para que Navigation sepa que debe volver al inicio
         document.dispatchEvent(new CustomEvent('navigate-to', { detail: 'inicio' }));
     }
 
+    /**
+     * Renderiza visualmente todas las actividades en el contenedor HTML.
+     * Genera dinámicamente las tarjetas de eventos, calculando barras de progreso,
+     * estados de botones y listados de comentarios.
+     */
     displayActivities() {
         const activities = this.getActivities();
         const currentUser = this.getCurrentUser();

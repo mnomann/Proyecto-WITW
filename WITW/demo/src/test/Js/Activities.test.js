@@ -4,7 +4,11 @@
 
 import { Activities } from '../../main/resources/static/js/Activities.js';
 
-// --- 1. Mock de localStorage (Igual que en Profile) ---
+/**
+ * Mock funcional de LocalStorage para el entorno de pruebas JSDOM.
+ * Simula los métodos getItem, setItem y clear utilizando un objeto en memoria,
+ * ya que JSDOM no persiste datos entre recargas reales.
+ */
 const localStorageMock = (function() {
   let store = {};
   return {
@@ -18,16 +22,25 @@ Object.defineProperty(window, 'localStorage', {
   value: localStorageMock
 });
 
-// --- 2. Suite de Pruebas ---
+/**
+ * Suite de pruebas unitarias para la clase Activities.
+ * Verifica la lógica de negocio principal: gestión de eventos (CRUD),
+ * persistencia de datos, control de asistencia y sistema de comentarios.
+ */
 describe('Clase Activities', () => {
   
   let activitiesInstance;
 
-  // Antes de cada prueba, reseteamos el DOM y el LocalStorage
+  /**
+   * Configuración previa a cada test (Setup).
+   * 1. Limpia el LocalStorage para asegurar un entorno estéril.
+   * 2. Reconstruye el DOM necesario (contenedor y formulario) para que la clase encuentre sus referencias.
+   * 3. Establece un usuario de sesión simulado ("currentUser") para las pruebas de interacción.
+   * 4. Instancia una nueva clase Activities.
+   */
   beforeEach(() => {
     window.localStorage.clear();
 
-    // Simulamos el HTML necesario para que la clase funcione
     document.body.innerHTML = `
       <div id="contenedor-actividades"></div>
       <form id="form-add">
@@ -41,77 +54,84 @@ describe('Clase Activities', () => {
       </form>
     `;
 
-    // Simulamos un usuario logueado para probar asistencias
     const user = JSON.stringify({ id: 99, nombre: 'Tester', email: 'test@mail.com' });
     window.localStorage.setItem('currentUser', user);
 
     activitiesInstance = new Activities();
   });
 
+  /**
+   * Verifica que la clase cargue las actividades de demostración (DUMMY_ACTIVITIES)
+   * automáticamente cuando no existen datos previos en el almacenamiento.
+   */
   test('Debe cargar actividades por defecto si no hay nada guardado', () => {
-    // Activities.js tiene 2 actividades dummy por defecto en el constructor
     const acts = activitiesInstance.getActivities();
     expect(acts.length).toBe(2);
     expect(acts[0].nombre).toBe('Senderismo en el Parque Nacional');
   });
 
+  /**
+   * Verifica el flujo completo de agregar una nueva actividad:
+   * 1. Captura de datos simulada mediante FormData.
+   * 2. Mock de window.alert para evitar errores en JSDOM.
+   * 3. Persistencia en la lista de actividades y validación de los datos guardados.
+   */
   test('Debe agregar una nueva actividad correctamente', () => {
-    // Simulamos el envío del formulario creando un FormData falso
     const formElement = document.getElementById('form-add');
-    const formData = new FormData(formElement); // Jest-jsdom soporta FormData básico
+    const formData = new FormData(formElement); 
 
-    // Manulamente llenamos los datos que esperamos (por si jsdom no lee los inputs automáticamente en versiones viejas)
     formData.set('nombre', 'Evento Jest');
     formData.set('capacidadMaxima', '50');
 
-    // Ejecutamos la función de agregar
-    // Mockeamos window.alert para que no rompa el test
     window.alert = jest.fn(); 
     
     activitiesInstance.handleAddActivity(formData);
 
-    // Verificamos que ahora hay 3 actividades (2 dummy + 1 nueva)
     const acts = activitiesInstance.getActivities();
     expect(acts.length).toBe(3);
     
-    // Verificamos que la última sea la nuestra
     const newAct = acts[acts.length - 1];
     expect(newAct.nombre).toBe('Evento Jest');
     expect(newAct.capacidadMaxima).toBe(50);
   });
 
+  /**
+   * Verifica que un usuario pueda marcar su asistencia a un evento.
+   * Comprueba que el ID del usuario actual se añada correctamente al array de asistentes del evento.
+   */
   test('Debe permitir al usuario asistir a un evento (Toggle Attendance)', () => {
-    // Tomamos la primera actividad
     let acts = activitiesInstance.getActivities();
     const activityId = acts[0].id;
 
-    // Ejecutamos toggleAttendance
     activitiesInstance.toggleAttendance(activityId);
 
-    // Volvemos a leer las actividades del storage
     acts = activitiesInstance.getActivities();
     const updatedActivity = acts.find(a => a.id === activityId);
 
-    // El usuario 99 debería estar en la lista de asistentes
     expect(updatedActivity.asistentes).toHaveLength(1);
     expect(updatedActivity.asistentes[0].id).toBe(99);
   });
 
+  /**
+   * Verifica que un usuario pueda retirar su asistencia si ya estaba inscrito.
+   * Se ejecuta toggleAttendance dos veces y se espera que la lista de asistentes vuelva a estar vacía.
+   */
   test('Debe retirar la asistencia si el usuario ya estaba inscrito', () => {
-    // 1. Inscribirse primero
     let acts = activitiesInstance.getActivities();
     const activityId = acts[0].id;
     activitiesInstance.toggleAttendance(activityId);
 
-    // 2. Ejecutar toggle de nuevo (Desinscribirse)
     activitiesInstance.toggleAttendance(activityId);
 
-    // 3. Verificar que la lista de asistentes esté vacía
     acts = activitiesInstance.getActivities();
     const updatedActivity = acts.find(a => a.id === activityId);
     expect(updatedActivity.asistentes).toHaveLength(0);
   });
 
+  /**
+   * Verifica la funcionalidad de agregar comentarios a una actividad.
+   * Asegura que el texto y el autor del comentario se persistan correctamente en el objeto del evento.
+   */
   test('Debe agregar un comentario', () => {
     const acts = activitiesInstance.getActivities();
     const activityId = acts[0].id;
